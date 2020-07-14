@@ -7,6 +7,7 @@ I wrote this using Python.
 I used these Twitch plays examples of code for reference:
 
 https://www.wituz.com/make-your-own-twitch-plays-stream.html
+
 https://www.dougdougw.com/twitch-plays-code/twitchplays-py
 
 I also looked at Pimanrules's code for YouTube Plays Super Mario Odyssey for reference too,
