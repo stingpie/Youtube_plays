@@ -21,9 +21,15 @@ gamepad = pyvjoy.VJoyDevice(1)
 commands = []
 # List  of valid commands, use to see if any valid inputs are use and if they are to
 # be counted towards the time spent processing them
+  # It seems m1 & m2 both correspond to the same joystick key. 
+  # It would probably be simpler if you just had m1 & maybe an extra command
+  # to turn off m1. 
 validCommands = ["up", "down", "left", "right", "u", "d", "l", "r",
                  "upleft", "upright" "downleft", "downright", "ul", "dl", "ur",
                  "mouse1", "mouse2", "m1", "m2"]
+
+
+
 
 
 async def main():
@@ -62,6 +68,12 @@ async def readchat(chatdata, togglem1=False, togglem2=False):
         # lists together and ignores things that don't match with the first list.
         # This method is not perfect and tends to ignore messages with unwanted outputs at the start
         # Still better than registering too many commands in a list
+          # So, what this simplifies down to is:
+          #
+          # for value in msgcmdlist:
+          #   if value in temp:
+          #     return value
+          #
         sortedCmdList = [value for value in msgCmdList if value in temp]
         # And print the result!
         print(len(sortedCmdList))
@@ -142,31 +154,47 @@ async def readchat(chatdata, togglem1=False, togglem2=False):
 
             # Now for the Mouse, I want it to toggle when m1 or m2 is detected
 
+            
+            
             # For "MOUSE1"
             if sortedCmdList[msgLoopCount] == "mouse1" or sortedCmdList[msgLoopCount] == "m1":
-                # This feels like a cheaty way of doing a toggle but it works!
-                if togglem1 is False:
-                    togglem1 = True
-                    gamepad.set_button(5, 1)
-                    print("m1 on")
-                elif togglem1 is True:
-                    togglem1 = False
+                # Here, since togglem1 can only be true or false, we can simply 
+                # invert the value of it. 
+                # Not True --> False
+                # Not False --> True
+                togglem1= not togglem1
+                
+                # Here, I removed the "is true", because
+                # that is asking if togglem1 == True,
+                # but in that case, togglem1 would just be true,
+                # so we can just ask if togglem1. 
+                if togglem1:
                     gamepad.set_button(5, 0)
                     print("m1 off")
+                else:
+                    gamepad.set_button(5, 1)
+                    print("m1 on")
 
             # For "MOUSE2"
             if sortedCmdList[msgLoopCount] == "mouse2" or sortedCmdList[msgLoopCount] == "m2":
-                if togglem2 is False:
-                    togglem2 = True
-                    gamepad.set_button(5, 1)
-                    print("m1 on")
-                elif togglem2 is True:
+                
+                togglem2 = not togglem2
+                if togglem2 :
                     togglem2 = False
                     gamepad.set_button(5, 0)
                     print("m1 off")
-
-            # Add +1 to the loop count and add a slight delay before processing the next command in the queue
+                else:
+                    gamepad.set_button(5, 1)
+                    print("m1 on")
+                    
+                    
+            # As far As I can tell, msgloopcount +=1 does not actually delay anything.
+            # Add +1 to the loop count then process the next command in the queue
             msgLoopCount += 1
+            
+            # This extra sleep command makes sure a frame has passed in between two button presses. 
+            # Otherwise, the mousebuttons could be activated and deactivated in the same frame. 
+            time.sleep(btnPushTime)
 
         await chatdata.tick_async()
 
@@ -177,12 +205,18 @@ async def readchat(chatdata, togglem1=False, togglem2=False):
 
 # todo: make a visual output for button presses
 
+  #   I'm not sure of the set-up your doing here, but if you are streaming your display,
+  #   you might want to try pygame. Depending on how you want the controls to show up, 
+  #   pygame would probably be the easiest.
+
 # todo: fix mouse output stickiness
 
 # todo: fix filter killing messages that don't fit the filter, instead of allowing them but ingoring unvalid inputs
 
 # This does something I don't fully understand yet, but it seems important
 # Looks like it takes the program back to the main fuction to make loop?
+  # What I think this does, is that it is the code that first runs when
+  # you load the program, and then it activates the other asyncrhonous loops. 
 if __name__ == '__main__':
     try:
         loop = asyncio.get_event_loop()
